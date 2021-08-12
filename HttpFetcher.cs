@@ -7,13 +7,13 @@ namespace Honeypot.Processing.Http
 {
     public class HttpFetcher<TResult>
     {
-        private readonly HttpClient client;
+        private readonly IHttpClient client;
         private readonly Handle handler;
 
         public delegate Task<TResult> Handle(HttpContent content, CancellationToken token); 
 
         public HttpFetcher(
-            HttpClient client, 
+            IHttpClient client, 
             Handle handler)
         {
             this.client = client 
@@ -28,10 +28,7 @@ namespace Honeypot.Processing.Http
                 HttpMethod.Get,
                 uri ?? throw new ArgumentNullException(nameof(uri)));
             using var response = await client
-                .SendAsync(
-                    request,
-                    HttpCompletionOption.ResponseHeadersRead,
-                    token)
+                .Execute(request, token)
                 .ConfigureAwait(false);
             return await this
                 .handler(response.EnsureSuccessStatusCode().Content, token)
